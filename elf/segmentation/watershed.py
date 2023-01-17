@@ -107,7 +107,7 @@ def distance_transform_watershed(input_, threshold, sigma_seeds,
             raise ValueError("Invalid mask")
 
         # return all zeros for empty mask
-        if mask.sum() == 0:
+        if np.logical_not(mask).sum() == 0:  # petelipp: changed this from mask to inverted mask
             return np.zeros_like(mask, dtype="uint64"), 0
 
     # threshold the input and compute distance transform
@@ -117,8 +117,9 @@ def distance_transform_watershed(input_, threshold, sigma_seeds,
 
     # shield of the masked area if given
     if mask is not None:
-        inv_mask = np.logical_not(mask)
-        dt[inv_mask] = 0.
+        # inv_mask = np.logical_not(mask)
+        # dt[inv_mask] = 0.
+        dt[mask] = 0.  # petelipp: I think the background should be set to zero instead.
 
     # compute seeds from maxima of the (smoothed) distance transform
     if sigma_seeds:
@@ -158,8 +159,8 @@ def distance_transform_watershed(input_, threshold, sigma_seeds,
     # compute watershed
     ws, max_id = watershed(hmap, seeds, size_filter=min_size)
 
-    if mask is not None:
-        ws[inv_mask] = 0
+    # if mask is not None:   # petelipp : commented this out
+    #     ws[inv_mask] = 0
 
     ws = ws.astype("uint64")
     return ws, max_id
