@@ -1,5 +1,4 @@
 import multiprocessing
-import time
 from concurrent import futures
 
 import nifty.tools as nt
@@ -114,10 +113,6 @@ def distance_transform_watershed(input_, threshold, sigma_seeds,
     # threshold the input and compute distance transform
     thresholded = (input_ > threshold).astype("uint32")
 
-    # deal with case of all background:
-    if thresholded.max() == 0:
-        return thresholded.astype(int), 0
-
     dt = vigra.filters.distanceTransform(thresholded, pixel_pitch=pixel_pitch)
 
     # shield of the masked area if given
@@ -153,8 +148,7 @@ def distance_transform_watershed(input_, threshold, sigma_seeds,
         seeds[initial_seed_mask] = initial_seeds[initial_seed_mask]
 
     # normalize and invert distance transform
-    # dt = 1. - (dt - dt.min()) / dt.max()
-    dt = 1. - (dt - dt.min()) / (dt.max() - dt.min())  # petelipp
+    dt = 1. - (dt - dt.min()) / dt.max()
 
     # compute weights from input and distance transform
     if sigma_weights:
@@ -165,8 +159,7 @@ def distance_transform_watershed(input_, threshold, sigma_seeds,
     # compute watershed
     ws, max_id = watershed(hmap, seeds, size_filter=min_size)
 
-    if mask is not None:   # petelipp
-        ws[mask] = 0
+    # if mask is not None:   # petelipp : commented this out
     #     ws[inv_mask] = 0
 
     ws = ws.astype("uint64")
@@ -373,16 +366,6 @@ def from_affinities_to_boundary_prob_map(affinities, offsets, used_offsets=None,
     if offset_weights is None:
         offset_weights = [1.0 for _ in range(len(used_offsets))]
     assert len(used_offsets) == len(offset_weights)
-
-    # handle case of short range affinities only (more efficiently):
-    if all(np.abs(offsets[ind]).sum() == 1 for ind in used_offsets):
-        weighted_inverted_affs = inverted_affs[used_offsets]
-        if not np.allclose(offset_weights, 1):
-            dims = len(inverted_affs.shape)
-            weighted_inverted_affs = weighted_inverted_affs * np.expand_dims(offset_weights,
-                                                                                  axis=tuple(np.arange(1, dims)))
-        return np.max(weighted_inverted_affs, axis=0).astype(np.float32)
-
     rolled_affs = []
     for i, offs_idx in enumerate(used_offsets):
         offset = offsets[offs_idx]
@@ -451,14 +434,10 @@ class WatershedOnDistanceTransformFromAffinities:
         if self.invert_affinities:
             affinities = 1. - affinities
 
-        print("hmap")
-        t1 = time.time()
         hmap = from_affinities_to_boundary_prob_map(
             affinities, self.offsets, self.used_offsets, self.offset_weights
         )
-        print("hmap is done.", hmap.shape, hmap.dtype, time.time() - t1)
 
-        t1 = time.time()
         background_mask = None if foreground_mask is None else np.logical_not(foreground_mask)
         if self.stacked_2d:
             segmentation, _ = stacked_watershed(
@@ -467,7 +446,6 @@ class WatershedOnDistanceTransformFromAffinities:
             )
         else:
             segmentation, _ = distance_transform_watershed(hmap, mask=background_mask, **self.watershed_kwargs)
-        print("watershed dist trafo", time.time() - t1)
 
         # Map ignored pixels to -1:
         if foreground_mask is not None:

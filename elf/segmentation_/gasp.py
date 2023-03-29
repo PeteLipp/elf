@@ -288,7 +288,6 @@ class GaspFromAffinities:
 
         runtime : float
         """
-        print("can i print anything here?")  # todo remove
         assert isinstance(affinities, np.ndarray)
         assert affinities.ndim == 4, "Need affinities with 4 channels, got %i" % affinities.ndim
         if self.invert_affinities:
@@ -297,7 +296,6 @@ class GaspFromAffinities:
             affinities_ = affinities
 
         if self.superpixel_generator is not None:
-            print("SP GEN IS BEING CALLED, NOW SHOULD COME THE PRINTS.")   # todo remove
             superpixel_segmentation = self.superpixel_generator(
                 affinities_, *args_superpixel_gen, foreground_mask=foreground_mask
             )
