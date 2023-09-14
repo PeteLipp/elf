@@ -19,7 +19,7 @@ from .multicut import compute_edge_costs
 def run_GASP(
         graph,
         signed_edge_weights,
-        linkage_criteria="mean",
+        linkage_criteria='mean',
         add_cannot_link_constraints=False,
         edge_sizes=None,
         is_mergeable_edge=None,
@@ -288,7 +288,6 @@ class GaspFromAffinities:
 
         runtime : float
         """
-        print("can i print anything here?")  # todo remove
         assert isinstance(affinities, np.ndarray)
         assert affinities.ndim == 4, "Need affinities with 4 channels, got %i" % affinities.ndim
         if self.invert_affinities:
@@ -297,7 +296,6 @@ class GaspFromAffinities:
             affinities_ = affinities
 
         if self.superpixel_generator is not None:
-            print("SP GEN IS BEING CALLED, NOW SHOULD COME THE PRINTS.")   # todo remove
             superpixel_segmentation = self.superpixel_generator(
                 affinities_, *args_superpixel_gen, foreground_mask=foreground_mask
             )
@@ -535,6 +533,6 @@ class SegmentationFeeder:
     def __call__(self, affinities, segmentation, foreground_mask=None):
         if foreground_mask is not None:
             assert foreground_mask.shape == segmentation.shape
-            segmentation = segmentation.astype("int64")
+            segmentation = segmentation.astype('int64')
             segmentation = np.where(foreground_mask, segmentation, np.ones_like(segmentation) * (-1))
         return segmentation
