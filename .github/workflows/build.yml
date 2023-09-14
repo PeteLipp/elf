@@ -12,7 +12,7 @@ jobs:
       fail-fast: false
       matrix:
         os: [ubuntu-latest, macos-latest, windows-latest]
-        python-version: [3.7]
+        python-version: [3.9]
 
     steps:
       - name: Checkout
@@ -22,6 +22,7 @@ jobs:
         uses: conda-incubator/setup-miniconda@v2
         with:
           activate-environment: elf-dev
+          mamba-version: "*"
           auto-update-conda: true
           channels: conda-forge
           environment-file: .github/workflows/environment.yaml
@@ -34,11 +35,12 @@ jobs:
         shell: bash -l {0}
         run: pip install -e .
 
-      # pyn5 can only be installed on linux
-      - name: Install pyn5
-        if: matrix.os == 'ubuntu-latest'
-        shell: bash -l {0}
-        run: pip install pyn5
+      # pyn5 does not work for py3.9
+      # # pyn5 can only be installed on linux
+      # - name: Install pyn5
+      #   if: matrix.os == 'ubuntu-latest'
+      #   shell: bash -l {0}
+      #   run: pip install pyn5
       
       - name: Run tests
         shell: bash -l {0}

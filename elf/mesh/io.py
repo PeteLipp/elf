@@ -38,7 +38,10 @@ def read_obj(path):
                 verts.append([float(ll) for ll in line.split()[1:]])
             # face
             elif line.startswith("f"):
-                faces.append([int(ll.split("/")[0]) for ll in line.split()[1:]])
+                this_face = [int(ll.split("/")[0]) for ll in line.split()[1:]]
+                if len(this_face) > 3:
+                    this_face = this_face[:3]
+                faces.append(this_face)
                 try:
                     face_normals.append([int(ll.split("/")[2]) for ll in line.split()[1:]])
                 except IndexError:
@@ -48,7 +51,7 @@ def read_obj(path):
 
 
 # TODO support different format for faces
-def write_obj(path, verts, faces, normals, face_normals=None, zero_based_face_index=False):
+def write_obj(path, verts, faces, normals=None, face_normals=None, zero_based_face_index=False):
     """ Write mesh to obj
     """
     with open(path, "w") as f:
@@ -58,9 +61,10 @@ def write_obj(path, verts, faces, normals, face_normals=None, zero_based_face_in
 
         f.write("\n")
 
-        for normal in normals:
-            f.write(" ".join(map(str, ["vn"] + normal.tolist())))
-            f.write("\n")
+        if normals is not None:
+            for normal in normals:
+                f.write(" ".join(map(str, ["vn"] + normal.tolist())))
+                f.write("\n")
 
         f.write("\n")
         f.write("vt 0.0 0.0\n")

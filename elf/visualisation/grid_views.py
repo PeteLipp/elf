@@ -3,17 +3,21 @@
 # simplified version of elf.htm
 #
 
-import napari
 import numpy as np
 
-from napari.experimental import link_layers
+try:
+    import napari
+    from napari.experimental import link_layers
+except ImportError:
+    napari = None
+    link_layers = None
 
 
 def get_position(grid_shape, image_shape, i, spacing):
     unraveled = np.unravel_index([i], grid_shape)
     grid_x, grid_y = unraveled[0][0], unraveled[1][0]
-    x = (image_shape[0] + spacing) * grid_x
-    y = (image_shape[1] + spacing) * grid_y
+    x = (image_shape[-1] + spacing) * grid_x
+    y = (image_shape[-2] + spacing) * grid_y
     return x, y
 
 
@@ -29,7 +33,7 @@ def add_grid_sources(name, images, grid_shape, settings, add_source, spacing):
 
 def set_camera(viewer, grid_shape, image_shape, spacing):
     # find the full extent in pixels
-    extent = [gsh * (ish + spacing) for gsh, ish in zip(grid_shape, image_shape)]
+    extent = [gsh * (ish + spacing) for gsh, ish in zip(grid_shape, image_shape[-2:])]
 
     # set the camera center to the middle
     camera_center = tuple(ext // 2 for ext in extent)
@@ -50,6 +54,7 @@ def simple_grid_view(image_data, label_data=None, settings=None, grid_shape=None
         spacing [int] -
         show [bool] -
     """
+    assert napari is not None and link_layers is not None, "Require napari"
 
     n_images = len(next(iter(image_data.values())))
     image_shape = next(iter(image_data.values()))[0].shape
